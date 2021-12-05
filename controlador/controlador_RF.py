@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix,classification_report
 from sklearn.metrics import accuracy_score
 
@@ -124,7 +124,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         X_flow_train, X_flow_test, y_flow_train, y_flow_test = train_test_split(X_flow, y_flow, test_size=0.20, random_state=0)
 
 
-        classifier = KNeighborsClassifier(n_neighbors=4, metric='minkowski')
+        classifier = RandomForestClassifier(n_estimators=100, criterion='gini',random_state=0)
         self.flow_model = classifier.fit(X_flow_train, y_flow_train)
         y_flow_pred = self.flow_model.predict(X_flow_test)
 
@@ -142,41 +142,50 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         self.logger.info("==============================")
 
     def flow_predict(self):
-        predict_flow_dataset = pd.read_csv('predict_ivo.csv')
+        try:
+            predict_flow_dataset = pd.read_csv('predict_ivo.csv')
 
-        predict_flow_dataset.iloc[:, 1] = predict_flow_dataset.iloc[:, 1].str.replace('.', '')
-        predict_flow_dataset.iloc[:, 3] = predict_flow_dataset.iloc[:, 3].str.replace('.', '')
-        predict_flow_dataset.iloc[:, -2] = predict_flow_dataset.iloc[:, -2].replace(",","")
+            predict_flow_dataset.iloc[:, 1] = predict_flow_dataset.iloc[:, 1].str.replace('.', '')
+            predict_flow_dataset.iloc[:, 3] = predict_flow_dataset.iloc[:, 3].str.replace('.', '')
+            predict_flow_dataset.iloc[:, -2] = predict_flow_dataset.iloc[:, -2].replace(",","")
 
-        X_predict_flow = predict_flow_dataset.iloc[:, :].values
-        X_predict_flow = X_predict_flow.astype('float32')
-        
-        y_flow_pred = self.flow_model.predict(X_predict_flow)
+            X_predict_flow = predict_flow_dataset.iloc[:, :].values
+            X_predict_flow = X_predict_flow.astype('float32')
+            
+            y_flow_pred = self.flow_model.predict(X_predict_flow)
 
-        legitimate_trafic = 0
-        ddos_trafic = 0
+            ddos_traffic = 0
+            n_datos = int(len(y_flow_pred))
+            
+            for i in y_flow_pred:
+                if i == 1:
+                    ddos_traffic += 1
+            print("Arreglo de Predicción",y_flow_pred)
+            print("traffic {}".format(ddos_traffic))
+            porcentaje = ((n_datos - ddos_traffic) / n_datos)
+            print("Acuraccy:  {0:.2f} %".format((porcentaje)*100))
 
-        for i in y_flow_pred:
-            if i == 0:
-                print("ok")
-            else:
-                print("opa D:")
-                # victim = int(predict_flow_dataset.iloc[i, 5])%20
-                # self.logger.info("victim is host: h{}".format(victim))
-                ddos_trafic = ddos_trafic + 1
-                            
-                
+            # for i in y_flow_pred:
+            #     if i == 0:
+            #         print("Normal...")
+            #     if i == 1:
+            #         print("Ataquee!")
+                    
 
-        self.logger.info("")
-        if (legitimate_trafic/len(y_flow_pred)*100) > 125:
-            self.logger.info("OK")
-        else:
-            self.logger.info("Nooooooooooo")
-            # self.logger.info("victim is host: h{}".format(victim))
+            # self.logger.info("")
+            # if (trafic/len(y_flow_pred)*100) > 125:
+            #     self.logger.info("OK")
+            # else:
+            #     self.logger.info("Nooooooooooo")
+            #     # self.logger.info("victim is host: h{}".format(victim))
 
-        self.logger.info("")
-        
-        file0 = open("predict_ivo.csv","w")
-        file0.write('datapath_id,ip_src,tp_src,ip_dst,tp_dst,ip_proto,icmp_code,icmp_type,flow_duration_sec,flags,packet_count,byte_count,packet_count_per_second,packet_count_per_nanosec,byte_count_per_nanosec\n')
-        file0.close()
-        hub.sleep(3)
+            self.logger.info("")
+            
+            file0 = open("predict_ivo.csv","w")
+            file0.write('datapath_id,ip_src,tp_src,ip_dst,tp_dst,ip_proto,icmp_code,icmp_type,flow_duration_sec,flags,packet_count,byte_count,packet_count_per_second,packet_count_per_nanosec,byte_count_per_nanosec\n')
+            file0.close()
+            hub.sleep(3)
+        except:
+            print(".csv predict con datos vacíos!")
+            print("==============================")
+            pass
