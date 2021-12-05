@@ -1,0 +1,1 @@
+datapath_id,ip_src,tp_src,ip_dst,tp_dst,ip_proto,icmp_code,icmp_type,flow_duration_sec,flags,packet_count,byte_count,packet_count_per_second,packet_count_per_nanosec,byte_count_per_nanosec
